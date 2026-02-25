@@ -28,6 +28,10 @@ final class NotchAnimator: ObservableObject {
         let window = NotchWindow(size: size)
         self.notchWindow = window
 
+        window.onDismiss = { [weak self] in
+            self?.dismissNow()
+        }
+
         let hostView = NSHostingView(
             rootView: NotchDropView(
                 date: date,
@@ -86,6 +90,12 @@ final class NotchAnimator: ObservableObject {
             window.orderOut(nil)
             notchWindow = nil
         }
+    }
+
+    func dismissNow() {
+        holdTimer?.cancel()
+        let useReducedMotion = settingsManager.effectiveReduceMotion
+        retract(reduceMotion: useReducedMotion)
     }
 
     // MARK: - Private

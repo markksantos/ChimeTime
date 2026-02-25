@@ -29,8 +29,8 @@ final class NotchTests: XCTestCase {
         XCTAssertFalse(window.isOpaque, "Window should not be opaque")
         XCTAssertEqual(window.backgroundColor, .clear, "Window background should be clear")
 
-        // Window should ignore mouse events
-        XCTAssertTrue(window.ignoresMouseEvents, "Window should ignore mouse events")
+        // Window should accept mouse events (click to dismiss)
+        XCTAssertFalse(window.ignoresMouseEvents, "Window should accept mouse events for tap-to-dismiss")
 
         // Window should not appear in Mission Control
         XCTAssertEqual(window.collectionBehavior.rawValue & NSWindow.CollectionBehavior.transient.rawValue,

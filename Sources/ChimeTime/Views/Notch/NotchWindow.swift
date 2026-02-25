@@ -24,9 +24,16 @@ final class NotchWindow: NSWindow {
         isOpaque = false
         backgroundColor = .clear
         hasShadow = false
-        ignoresMouseEvents = true
+        ignoresMouseEvents = false
         level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 1)
         collectionBehavior = [.transient, .ignoresCycle]
         isReleasedWhenClosed = false
+    }
+
+    // Dismiss callback — set by NotchAnimator
+    var onDismiss: (() -> Void)?
+
+    override func mouseDown(with event: NSEvent) {
+        onDismiss?()
     }
 }
