@@ -33,7 +33,8 @@ final class NotchAnimator: ObservableObject {
                 date: date,
                 showDate: settingsManager.showDateInNotification,
                 use24Hour: settingsManager.effective24HourFormat,
-                size: size
+                size: size,
+                backgroundColor: settingsManager.dropdownNSColor
             )
         )
         window.contentView = hostView

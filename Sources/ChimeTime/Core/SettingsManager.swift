@@ -22,6 +22,9 @@ final class SettingsManager: ObservableObject {
         static let showDateInNotification = "chimetime.showDateInNotification"
         static let appTheme = "chimetime.appTheme"
         static let accentColor = "chimetime.accentColor"
+        static let dropdownColorR = "chimetime.dropdownColorR"
+        static let dropdownColorG = "chimetime.dropdownColorG"
+        static let dropdownColorB = "chimetime.dropdownColorB"
     }
 
     @Published var isEnabled: Bool {
@@ -104,6 +107,20 @@ final class SettingsManager: ObservableObject {
         didSet { defaults.set(accentColor.rawValue, forKey: Keys.accentColor) }
     }
 
+    @Published var dropdownColorR: Double {
+        didSet { defaults.set(dropdownColorR, forKey: Keys.dropdownColorR) }
+    }
+    @Published var dropdownColorG: Double {
+        didSet { defaults.set(dropdownColorG, forKey: Keys.dropdownColorG) }
+    }
+    @Published var dropdownColorB: Double {
+        didSet { defaults.set(dropdownColorB, forKey: Keys.dropdownColorB) }
+    }
+
+    var dropdownNSColor: NSColor {
+        NSColor(red: dropdownColorR, green: dropdownColorG, blue: dropdownColorB, alpha: 0.95)
+    }
+
     /// Whether to use reduced motion (resolves app override vs system preference)
     var effectiveReduceMotion: Bool {
         if let override = reduceMotion { return override }
@@ -142,6 +159,9 @@ final class SettingsManager: ObservableObject {
         self.showDateInNotification = defaults.object(forKey: Keys.showDateInNotification) as? Bool ?? true
         self.appTheme = AppTheme(rawValue: defaults.string(forKey: Keys.appTheme) ?? "") ?? .auto
         self.accentColor = AccentColor(rawValue: defaults.string(forKey: Keys.accentColor) ?? "") ?? .blue
+        self.dropdownColorR = defaults.object(forKey: Keys.dropdownColorR) as? Double ?? 0.0
+        self.dropdownColorG = defaults.object(forKey: Keys.dropdownColorG) as? Double ?? 0.0
+        self.dropdownColorB = defaults.object(forKey: Keys.dropdownColorB) as? Double ?? 0.0
     }
 
     /// Check if a given hour (0-23) is within quiet hours

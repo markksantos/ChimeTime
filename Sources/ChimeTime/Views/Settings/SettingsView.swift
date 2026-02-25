@@ -45,6 +45,8 @@ struct SettingsView: View {
                     .padding(24)
             }
         }
+        .navigationSplitViewStyle(.prominentDetail)
+        .toolbar(.hidden)
         .frame(minWidth: 580, minHeight: 440)
     }
 
@@ -336,6 +338,8 @@ private struct ScheduleTab: View {
 private struct AppearanceTab: View {
     @EnvironmentObject var settings: SettingsManager
 
+    @State private var dropdownColor: Color = .black
+
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             SectionHeader("Appearance", subtitle: "Visual style of the notification")
@@ -379,6 +383,29 @@ private struct AppearanceTab: View {
                             }
                         }
                     }
+
+                    Divider()
+
+                    HStack(spacing: 16) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Dropdown Color")
+                                .font(.body)
+                            Text("Background color of the notch notification")
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                        }
+                        Spacer()
+                        ColorPicker("", selection: $dropdownColor, supportsOpacity: false)
+                            .labelsHidden()
+                            .onChange(of: dropdownColor) { newColor in
+                                if let components = NSColor(newColor).usingColorSpace(.deviceRGB) {
+                                    settings.dropdownColorR = components.redComponent
+                                    settings.dropdownColorG = components.greenComponent
+                                    settings.dropdownColorB = components.blueComponent
+                                }
+                            }
+                    }
+                    .padding(.vertical, 4)
                 }
                 .padding(4)
             }
@@ -408,6 +435,14 @@ private struct AppearanceTab: View {
                 }
                 .padding(4)
             }
+        }
+        .onAppear {
+            dropdownColor = Color(nsColor: NSColor(
+                red: settings.dropdownColorR,
+                green: settings.dropdownColorG,
+                blue: settings.dropdownColorB,
+                alpha: 1.0
+            ))
         }
     }
 }

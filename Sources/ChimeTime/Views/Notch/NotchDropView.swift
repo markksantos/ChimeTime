@@ -5,6 +5,15 @@ struct NotchDropView: View {
     let showDate: Bool
     let use24Hour: Bool
     let size: NotificationSize
+    let backgroundColor: NSColor
+
+    init(date: Date, showDate: Bool, use24Hour: Bool, size: NotificationSize, backgroundColor: NSColor = NSColor(red: 0, green: 0, blue: 0, alpha: 0.95)) {
+        self.date = date
+        self.showDate = showDate
+        self.use24Hour = use24Hour
+        self.size = size
+        self.backgroundColor = backgroundColor
+    }
 
     var body: some View {
         VStack(spacing: 6) {
@@ -26,7 +35,7 @@ struct NotchDropView: View {
         .padding(.horizontal, 20)
         .frame(width: size.windowWidth)
         .background(
-            Color(nsColor: NSColor(red: 0.11, green: 0.11, blue: 0.118, alpha: 0.95))
+            Color(nsColor: backgroundColor)
         )
         .clipShape(NotchShape(cornerRadius: 20))
         .overlay(
