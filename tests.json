@@ -1,0 +1,26 @@
+{
+  "tests": [
+    {"id": 1, "name": "notch_window_positioned_center_top", "owner": "animation", "status": "not_started"},
+    {"id": 2, "name": "notch_drop_spring_animation_3_phases", "owner": "animation", "status": "not_started"},
+    {"id": 3, "name": "notch_respects_reduce_motion", "owner": "animation", "status": "not_started"},
+    {"id": 4, "name": "time_display_12h_and_24h_formats", "owner": "animation", "status": "not_started"},
+    {"id": 5, "name": "time_display_monospaced_digits", "owner": "animation", "status": "not_started"},
+    {"id": 6, "name": "notch_shape_flat_top_rounded_bottom", "owner": "animation", "status": "not_started"},
+    {"id": 7, "name": "scheduler_next_hour_calculation", "owner": "core", "status": "not_started"},
+    {"id": 8, "name": "scheduler_no_drift_recalculates_each_fire", "owner": "core", "status": "not_started"},
+    {"id": 9, "name": "scheduler_sleep_wake_recalculation", "owner": "core", "status": "not_started"},
+    {"id": 10, "name": "scheduler_quiet_hours_suppression", "owner": "core", "status": "not_started"},
+    {"id": 11, "name": "scheduler_disabled_hours_skipped", "owner": "core", "status": "not_started"},
+    {"id": 12, "name": "chime_sounds_4_variants_play", "owner": "core", "status": "not_started"},
+    {"id": 13, "name": "time_speaker_natural_phrasing", "owner": "core", "status": "not_started"},
+    {"id": 14, "name": "settings_persist_to_userdefaults", "owner": "core", "status": "not_started"},
+    {"id": 15, "name": "login_item_toggle_works", "owner": "core", "status": "not_started"},
+    {"id": 16, "name": "menu_bar_popover_shows_next_chime", "owner": "ui", "status": "not_started"},
+    {"id": 17, "name": "menu_bar_preview_button_triggers_animation", "owner": "ui", "status": "not_started"},
+    {"id": 18, "name": "settings_tabs_all_render", "owner": "ui", "status": "not_started"},
+    {"id": 19, "name": "hour_grid_toggle_individual_hours", "owner": "ui", "status": "not_started"},
+    {"id": 20, "name": "hour_grid_presets_select_correct_hours", "owner": "ui", "status": "not_started"},
+    {"id": 21, "name": "sound_preview_plays_correct_chime", "owner": "ui", "status": "not_started"},
+    {"id": 22, "name": "project_builds_clean_no_warnings", "owner": "lead", "status": "not_started"}
+  ]
+}
