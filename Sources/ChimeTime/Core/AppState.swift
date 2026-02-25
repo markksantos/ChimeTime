@@ -102,5 +102,8 @@ final class AppState: ObservableObject {
     // Callback for triggering the notch animation
     var onHourlyChime: ((Date) -> Void)?
 
+    // Callback for opening settings window
+    var onOpenSettings: (() -> Void)?
+
     init() {}
 }

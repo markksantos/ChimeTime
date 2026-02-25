@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var notchAnimator: NotchAnimator?
     private var chimeSoundPlayer: ChimeSoundPlayer?
     private var timeSpeaker: TimeSpeaker?
+    private var settingsWindow: NSWindow?
     private var cancellables = Set<AnyCancellable>()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -57,6 +58,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         appState.onHourlyChime = { [weak self] date in
             self?.handleHourlyChime(at: date)
         }
+
+        // Wire up settings opener
+        appState.onOpenSettings = { [weak self] in
+            self?.openSettings()
+        }
+    }
+
+    func openSettings() {
+        if let window = settingsWindow {
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let settingsView = SettingsView()
+            .environmentObject(appState)
+            .environmentObject(settingsManager)
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 500, height: 450),
+            styleMask: [.titled, .closable, .resizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "ChimeTime Settings"
+        window.contentView = NSHostingView(rootView: settingsView)
+        window.center()
+        window.isReleasedWhenClosed = false
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        settingsWindow = window
     }
 
     private func handleHourlyChime(at date: Date) {

@@ -38,7 +38,7 @@ struct MenuBarIcon: View {
 
             // Settings
             Button("Settings...") {
-                NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                appState.onOpenSettings?()
             }
             .keyboardShortcut(",", modifiers: .command)
 
