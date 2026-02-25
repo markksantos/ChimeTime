@@ -39,10 +39,28 @@ struct SettingsView: View {
             .listStyle(.sidebar)
             .navigationSplitViewColumnWidth(min: 160, ideal: 180, max: 200)
         } detail: {
-            ScrollView {
-                detailContent
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(24)
+            VStack(spacing: 0) {
+                // Top bar with preview button
+                HStack {
+                    Spacer()
+                    Button {
+                        appState.onHourlyChime?(Date())
+                    } label: {
+                        Label("Preview", systemImage: "play.circle")
+                            .font(.body)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 16)
+                .padding(.bottom, 4)
+
+                ScrollView {
+                    detailContent
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(24)
+                }
             }
         }
         .navigationSplitViewStyle(.prominentDetail)
