@@ -1,28 +1,125 @@
 import SwiftUI
 
+enum SettingsTab: String, CaseIterable, Identifiable {
+    case general, sound, schedule, appearance
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .general: return "General"
+        case .sound: return "Sound"
+        case .schedule: return "Schedule"
+        case .appearance: return "Appearance"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .general: return "gear"
+        case .sound: return "speaker.wave.2"
+        case .schedule: return "calendar.badge.clock"
+        case .appearance: return "paintbrush"
+        }
+    }
+}
+
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var settings: SettingsManager
 
+    @State private var selectedTab: SettingsTab = .general
+
     var body: some View {
-        TabView {
+        NavigationSplitView {
+            List(SettingsTab.allCases, selection: $selectedTab) { tab in
+                Label(tab.label, systemImage: tab.icon)
+                    .tag(tab)
+            }
+            .listStyle(.sidebar)
+            .navigationSplitViewColumnWidth(min: 160, ideal: 180, max: 200)
+        } detail: {
+            ScrollView {
+                detailContent
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(24)
+            }
+        }
+        .frame(minWidth: 580, minHeight: 440)
+    }
+
+    @ViewBuilder
+    private var detailContent: some View {
+        switch selectedTab {
+        case .general:
             GeneralTab()
                 .environmentObject(settings)
-                .tabItem { Label("General", systemImage: "gear") }
-
+        case .sound:
             SoundTab()
                 .environmentObject(settings)
-                .tabItem { Label("Sound", systemImage: "speaker.wave.2") }
-
+        case .schedule:
             ScheduleTab()
                 .environmentObject(settings)
-                .tabItem { Label("Schedule", systemImage: "calendar") }
-
+        case .appearance:
             AppearanceTab()
                 .environmentObject(settings)
-                .tabItem { Label("Appearance", systemImage: "paintbrush") }
         }
-        .frame(width: 450, height: 360)
+    }
+}
+
+// MARK: - Section Header
+
+private struct SectionHeader: View {
+    let title: String
+    let subtitle: String?
+
+    init(_ title: String, subtitle: String? = nil) {
+        self.title = title
+        self.subtitle = subtitle
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.title2.weight(.semibold))
+            if let subtitle {
+                Text(subtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.bottom, 8)
+    }
+}
+
+// MARK: - Setting Row
+
+private struct SettingRow<Content: View>: View {
+    let label: String
+    let description: String?
+    let content: Content
+
+    init(_ label: String, description: String? = nil, @ViewBuilder content: () -> Content) {
+        self.label = label
+        self.description = description
+        self.content = content()
+    }
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 16) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label)
+                    .font(.body)
+                if let description {
+                    Text(description)
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            Spacer()
+            content
+        }
+        .padding(.vertical, 4)
     }
 }
 
@@ -32,22 +129,65 @@ private struct GeneralTab: View {
     @EnvironmentObject var settings: SettingsManager
 
     var body: some View {
-        Form {
-            Toggle("Launch at Login", isOn: $settings.launchAtLogin)
+        VStack(alignment: .leading, spacing: 20) {
+            SectionHeader("General", subtitle: "Core app behavior and notification display")
 
-            Toggle("Enable Hourly Chime", isOn: $settings.isEnabled)
+            GroupBox {
+                VStack(spacing: 12) {
+                    SettingRow("Launch at Login", description: "Start ChimeTime when you log in") {
+                        Toggle("", isOn: $settings.launchAtLogin)
+                            .toggleStyle(.switch)
+                            .labelsHidden()
+                    }
 
-            DurationSlider(value: $settings.displayDuration)
+                    Divider()
 
-            Picker("Notification Size", selection: $settings.notificationSize) {
-                ForEach(NotificationSize.allCases) { size in
-                    Text(size.displayName).tag(size)
+                    SettingRow("Hourly Chime", description: "Master on/off for all notifications") {
+                        Toggle("", isOn: $settings.isEnabled)
+                            .toggleStyle(.switch)
+                            .labelsHidden()
+                    }
                 }
+                .padding(4)
             }
 
-            Toggle("Show Date in Notification", isOn: $settings.showDateInNotification)
+            GroupBox {
+                VStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Display Duration")
+                                .font(.body)
+                            Spacer()
+                            Text(String(format: "%.1fs", settings.displayDuration))
+                                .font(.body.monospacedDigit())
+                                .foregroundStyle(.secondary)
+                        }
+                        Slider(value: $settings.displayDuration, in: 2.0...8.0, step: 0.5)
+                    }
+
+                    Divider()
+
+                    SettingRow("Notification Size") {
+                        Picker("", selection: $settings.notificationSize) {
+                            ForEach(NotificationSize.allCases) { size in
+                                Text(size.displayName).tag(size)
+                            }
+                        }
+                        .labelsHidden()
+                        .frame(width: 140)
+                    }
+
+                    Divider()
+
+                    SettingRow("Show Date", description: "Display day and date below the time") {
+                        Toggle("", isOn: $settings.showDateInNotification)
+                            .toggleStyle(.switch)
+                            .labelsHidden()
+                    }
+                }
+                .padding(4)
+            }
         }
-        .padding()
     }
 }
 
@@ -56,39 +196,72 @@ private struct GeneralTab: View {
 private struct SoundTab: View {
     @EnvironmentObject var settings: SettingsManager
 
-    private let availableSounds = ["gentle", "tick", "wood", "silent"]
+    private let chimeSounds = ["gentle", "tick", "wood", "silent"]
 
     var body: some View {
-        Form {
-            Picker("Sound Mode", selection: $settings.soundMode) {
-                ForEach(SoundMode.allCases) { mode in
-                    Text(mode.displayName).tag(mode)
+        VStack(alignment: .leading, spacing: 20) {
+            SectionHeader("Sound", subtitle: "Chime and spoken time settings")
+
+            GroupBox {
+                VStack(spacing: 12) {
+                    SettingRow("Sound Mode") {
+                        Picker("", selection: $settings.soundMode) {
+                            ForEach(SoundMode.allCases) { mode in
+                                Text(mode.displayName).tag(mode)
+                            }
+                        }
+                        .labelsHidden()
+                        .frame(width: 160)
+                    }
                 }
+                .padding(4)
             }
 
-            Section("Chime Sound") {
-                ForEach(availableSounds, id: \.self) { sound in
-                    SoundPreviewRow(
-                        soundName: sound,
-                        isSelected: settings.selectedChimeSound == sound,
-                        onSelect: { settings.selectedChimeSound = sound },
-                        onPreview: { previewSound(sound) }
-                    )
+            if settings.soundMode != .none {
+                GroupBox {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Chime Sound")
+                            .font(.body.weight(.medium))
+                            .padding(.bottom, 4)
+
+                        ForEach(chimeSounds, id: \.self) { sound in
+                            SoundPreviewRow(
+                                soundName: sound,
+                                isSelected: settings.selectedChimeSound == sound,
+                                onSelect: { settings.selectedChimeSound = sound },
+                                onPreview: { ChimeSoundPlayer().play(sound: sound) }
+                            )
+                            if sound != chimeSounds.last {
+                                Divider()
+                            }
+                        }
+                    }
+                    .padding(4)
                 }
+                .opacity(settings.soundMode == .speakTime ? 0.5 : 1.0)
+                .disabled(settings.soundMode == .speakTime)
             }
 
-            HStack {
-                Text("Speak Volume")
-                Slider(value: $settings.speakTimeVolume, in: 0...1)
+            if settings.soundMode == .speakTime || settings.soundMode == .chimeAndSpeak {
+                GroupBox {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Speech Volume")
+                                .font(.body)
+                            Spacer()
+                            Text("\(Int(settings.speakTimeVolume * 100))%")
+                                .font(.body.monospacedDigit())
+                                .foregroundStyle(.secondary)
+                        }
+                        Slider(value: $settings.speakTimeVolume, in: 0...1)
+                        Text("Sounds respect your system volume")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(4)
+                }
             }
         }
-        .padding()
-    }
-
-    private func previewSound(_ sound: String) {
-        // ChimeSoundPlayer is built by another teammate; preview wired via AppDelegate
-        // For now, this is a placeholder that will be connected at integration time
-        NSSound(named: NSSound.Name(sound))?.play()
     }
 }
 
@@ -98,33 +271,56 @@ private struct ScheduleTab: View {
     @EnvironmentObject var settings: SettingsManager
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HourGridView()
-                .environmentObject(settings)
+        VStack(alignment: .leading, spacing: 20) {
+            SectionHeader("Schedule", subtitle: "Choose which hours to receive notifications")
 
-            Divider()
+            GroupBox {
+                HourGridView()
+                    .environmentObject(settings)
+                    .padding(4)
+            }
 
-            Toggle("Quiet Hours", isOn: $settings.quietHoursEnabled)
+            GroupBox {
+                VStack(spacing: 12) {
+                    SettingRow("Quiet Hours", description: "Suppress notifications during a time range") {
+                        Toggle("", isOn: $settings.quietHoursEnabled)
+                            .toggleStyle(.switch)
+                            .labelsHidden()
+                    }
 
-            if settings.quietHoursEnabled {
-                HStack(spacing: 16) {
-                    Picker("From", selection: $settings.quietHoursStart) {
-                        ForEach(0..<24, id: \.self) { hour in
-                            Text(formatHour(hour)).tag(hour)
+                    if settings.quietHoursEnabled {
+                        Divider()
+
+                        HStack(spacing: 24) {
+                            HStack(spacing: 8) {
+                                Text("From")
+                                    .foregroundStyle(.secondary)
+                                Picker("", selection: $settings.quietHoursStart) {
+                                    ForEach(0..<24, id: \.self) { hour in
+                                        Text(formatHour(hour)).tag(hour)
+                                    }
+                                }
+                                .labelsHidden()
+                                .frame(width: 110)
+                            }
+
+                            HStack(spacing: 8) {
+                                Text("To")
+                                    .foregroundStyle(.secondary)
+                                Picker("", selection: $settings.quietHoursEnd) {
+                                    ForEach(0..<24, id: \.self) { hour in
+                                        Text(formatHour(hour)).tag(hour)
+                                    }
+                                }
+                                .labelsHidden()
+                                .frame(width: 110)
+                            }
                         }
                     }
-                    .frame(width: 150)
-
-                    Picker("To", selection: $settings.quietHoursEnd) {
-                        ForEach(0..<24, id: \.self) { hour in
-                            Text(formatHour(hour)).tag(hour)
-                        }
-                    }
-                    .frame(width: 150)
                 }
+                .padding(4)
             }
         }
-        .padding()
     }
 
     private func formatHour(_ hour: Int) -> String {
@@ -141,49 +337,77 @@ private struct AppearanceTab: View {
     @EnvironmentObject var settings: SettingsManager
 
     var body: some View {
-        Form {
-            Picker("Theme", selection: $settings.appTheme) {
-                ForEach(AppTheme.allCases) { theme in
-                    Text(theme.displayName).tag(theme)
-                }
-            }
+        VStack(alignment: .leading, spacing: 20) {
+            SectionHeader("Appearance", subtitle: "Visual style of the notification")
 
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Accent Color")
-                HStack(spacing: 12) {
-                    ForEach(AccentColor.allCases) { color in
-                        Button {
-                            settings.accentColor = color
-                        } label: {
-                            Circle()
-                                .fill(color.color)
-                                .frame(width: 24, height: 24)
-                                .overlay(
-                                    Circle()
-                                        .strokeBorder(
-                                            settings.accentColor == color ? Color.primary : Color.clear,
-                                            lineWidth: 2
-                                        )
-                                )
+            GroupBox {
+                VStack(spacing: 12) {
+                    SettingRow("Theme") {
+                        Picker("", selection: $settings.appTheme) {
+                            ForEach(AppTheme.allCases) { theme in
+                                Text(theme.displayName).tag(theme)
+                            }
                         }
-                        .buttonStyle(.plain)
+                        .labelsHidden()
+                        .frame(width: 180)
+                    }
+
+                    Divider()
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Accent Color")
+                            .font(.body)
+
+                        HStack(spacing: 10) {
+                            ForEach(AccentColor.allCases) { color in
+                                Button {
+                                    settings.accentColor = color
+                                } label: {
+                                    ZStack {
+                                        Circle()
+                                            .fill(color.color)
+                                            .frame(width: 28, height: 28)
+                                        if settings.accentColor == color {
+                                            Circle()
+                                                .strokeBorder(Color.primary, lineWidth: 2.5)
+                                                .frame(width: 34, height: 34)
+                                        }
+                                    }
+                                    .frame(width: 36, height: 36)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
                     }
                 }
+                .padding(4)
             }
 
-            Toggle("Reduce Motion", isOn: Binding(
-                get: { settings.reduceMotion ?? false },
-                set: { settings.reduceMotion = $0 }
-            ))
+            GroupBox {
+                VStack(spacing: 12) {
+                    SettingRow("Reduce Motion", description: "Use fade instead of slide animation") {
+                        Toggle("", isOn: Binding(
+                            get: { settings.effectiveReduceMotion },
+                            set: { settings.reduceMotion = $0 }
+                        ))
+                        .toggleStyle(.switch)
+                        .labelsHidden()
+                    }
 
-            if settings.reduceMotion != nil {
-                Button("Use System Default") {
-                    settings.reduceMotion = nil
+                    if settings.reduceMotion != nil {
+                        HStack {
+                            Spacer()
+                            Button("Reset to System Default") {
+                                settings.reduceMotion = nil
+                            }
+                            .buttonStyle(.borderless)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        }
+                    }
                 }
-                .buttonStyle(.borderless)
-                .font(.caption)
+                .padding(4)
             }
         }
-        .padding()
     }
 }

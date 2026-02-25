@@ -77,7 +77,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .environmentObject(settingsManager)
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 500, height: 450),
+            contentRect: NSRect(x: 0, y: 0, width: 620, height: 480),
             styleMask: [.titled, .closable, .resizable],
             backing: .buffered,
             defer: false
