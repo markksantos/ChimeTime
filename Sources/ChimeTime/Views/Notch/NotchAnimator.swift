@@ -19,12 +19,16 @@ final class NotchAnimator: ObservableObject {
     }
 
     func showNotification(for date: Date) {
-        // Cancel any pending retract
+        // Dismiss any existing notification immediately
         holdTimer?.cancel()
+        if let existing = notchWindow {
+            existing.orderOut(nil)
+            notchWindow = nil
+        }
 
         let size = settingsManager.notificationSize
 
-        // Create or reconfigure window
+        // Create new window
         let window = NotchWindow(size: size)
         self.notchWindow = window
 
