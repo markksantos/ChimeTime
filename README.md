@@ -2,6 +2,8 @@
 
 # 🔔 ChimeTime
 
+<img src="app-icon.png" width="128" alt="ChimeTime icon" />
+
 A native macOS menu bar app that drops a beautiful time notification from the MacBook notch every hour.
 
 [![Swift](https://img.shields.io/badge/Swift-5.9-F05138?style=for-the-badge&logo=swift&logoColor=white)](https://swift.org)
