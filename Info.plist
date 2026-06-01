@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>ChimeTime</string>
+    <key>CFBundleDisplayName</key>
+    <string>ChimeTime</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.chimetime.app</string>
+    <key>CFBundleVersion</key>
+    <string>1.0</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>CFBundleExecutable</key>
+    <string>ChimeTime</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <!-- Menu bar agent: no Dock icon, no main window on launch. -->
+    <key>LSUIElement</key>
+    <true/>
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright © 2026 Mark Santos. MIT Licensed.</string>
+    <!-- Required by EventKit for the "Calendar Quiet Hours" feature. -->
+    <key>NSCalendarsUsageDescription</key>
+    <string>ChimeTime checks your calendar to stay silent during meetings when Calendar Quiet Hours is enabled.</string>
+    <key>NSCalendarsFullAccessUsageDescription</key>
+    <string>ChimeTime checks your calendar to stay silent during meetings when Calendar Quiet Hours is enabled.</string>
+</dict>
+</plist>

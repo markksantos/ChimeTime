@@ -1,0 +1,136 @@
+{
+  "tests": [
+    {
+      "id": 1,
+      "name": "notch_window_positioned_center_top",
+      "owner": "animation",
+      "status": "passing"
+    },
+    {
+      "id": 2,
+      "name": "notch_drop_spring_animation_3_phases",
+      "owner": "animation",
+      "status": "passing"
+    },
+    {
+      "id": 3,
+      "name": "notch_respects_reduce_motion",
+      "owner": "animation",
+      "status": "passing"
+    },
+    {
+      "id": 4,
+      "name": "time_display_12h_and_24h_formats",
+      "owner": "animation",
+      "status": "passing"
+    },
+    {
+      "id": 5,
+      "name": "time_display_monospaced_digits",
+      "owner": "animation",
+      "status": "passing"
+    },
+    {
+      "id": 6,
+      "name": "notch_shape_flat_top_rounded_bottom",
+      "owner": "animation",
+      "status": "passing"
+    },
+    {
+      "id": 7,
+      "name": "scheduler_next_hour_calculation",
+      "owner": "core",
+      "status": "passing"
+    },
+    {
+      "id": 8,
+      "name": "scheduler_no_drift_recalculates_each_fire",
+      "owner": "core",
+      "status": "passing"
+    },
+    {
+      "id": 9,
+      "name": "scheduler_sleep_wake_recalculation",
+      "owner": "core",
+      "status": "passing"
+    },
+    {
+      "id": 10,
+      "name": "scheduler_quiet_hours_suppression",
+      "owner": "core",
+      "status": "passing"
+    },
+    {
+      "id": 11,
+      "name": "scheduler_disabled_hours_skipped",
+      "owner": "core",
+      "status": "passing"
+    },
+    {
+      "id": 12,
+      "name": "chime_sounds_4_variants_play",
+      "owner": "core",
+      "status": "passing"
+    },
+    {
+      "id": 13,
+      "name": "time_speaker_natural_phrasing",
+      "owner": "core",
+      "status": "passing"
+    },
+    {
+      "id": 14,
+      "name": "settings_persist_to_userdefaults",
+      "owner": "core",
+      "status": "passing"
+    },
+    {
+      "id": 15,
+      "name": "login_item_toggle_works",
+      "owner": "core",
+      "status": "passing"
+    },
+    {
+      "id": 16,
+      "name": "menu_bar_popover_shows_next_chime",
+      "owner": "ui",
+      "status": "passing"
+    },
+    {
+      "id": 17,
+      "name": "menu_bar_preview_button_triggers_animation",
+      "owner": "ui",
+      "status": "passing"
+    },
+    {
+      "id": 18,
+      "name": "settings_tabs_all_render",
+      "owner": "ui",
+      "status": "passing"
+    },
+    {
+      "id": 19,
+      "name": "hour_grid_toggle_individual_hours",
+      "owner": "ui",
+      "status": "passing"
+    },
+    {
+      "id": 20,
+      "name": "hour_grid_presets_select_correct_hours",
+      "owner": "ui",
+      "status": "passing"
+    },
+    {
+      "id": 21,
+      "name": "sound_preview_plays_correct_chime",
+      "owner": "ui",
+      "status": "passing"
+    },
+    {
+      "id": 22,
+      "name": "project_builds_clean_no_warnings",
+      "owner": "lead",
+      "status": "passing"
+    }
+  ]
+}

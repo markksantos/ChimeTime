@@ -1,0 +1,20 @@
+# Swift / SwiftPM build artifacts
+.build/
+.swiftpm/
+*.xcodeproj/xcuserdata/
+DerivedData/
+
+# Built app bundle (produced by scripts/build-app.sh)
+ChimeTime.app/
+*.dmg
+*.zip
+
+# macOS
+.DS_Store
+
+# Secrets / signing (never commit)
+*.pem
+*.p12
+*.cer
+*.mobileprovision
+ExportOptions*.plist
