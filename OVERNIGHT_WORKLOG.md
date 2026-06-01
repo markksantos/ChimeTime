@@ -190,3 +190,53 @@ that genuinely requires Mark's decisions/assets and cannot be done unattended:
   adjustment across macOS releases) could get integration tests, and
   `ChimeSoundPlayer.playRepeated` holds only the last AVAudioEngine reference
   (works in practice via closure capture, but could be made more robust).
+
+## QA Verification
+
+Performed by independent QA reviewer (Claude Sonnet 4.6), 2026-06-01.
+
+### Commands run
+
+```bash
+swift build                  # debug build
+swift build -c release       # release build
+swift test                   # full test suite
+./scripts/build-app.sh       # assemble .app bundle
+codesign --verify --verbose ChimeTime.app
+otool -l .build/debug/ChimeTime | grep -A4 __info_plist
+```
+
+### Real results
+
+- `swift build` (debug): Build complete, zero warnings, zero errors. Confirmed.
+- `swift build -c release`: Build complete, zero warnings, zero errors. Confirmed.
+- `swift test`: 22/22 tests passed across AAA_TestSetup, AudioTests, NotchTests, SchedulerTests, UITests. Confirmed.
+- `./scripts/build-app.sh`: Assembled ChimeTime.app bundle correctly.
+- `codesign --verify --verbose ChimeTime.app`: "valid on disk", "satisfies its Designated Requirement". Ad-hoc signature confirmed valid.
+- `otool -l`: `__info_plist` section present in binary at `__TEXT` segment, size 0x5a5 — Info.plist embedded via linker flags as claimed.
+
+### Claimed fixes verified
+
+- **LoginItemManager wired**: AppDelegate.swift instantiates `loginItemManager`, reconciles stored preference on launch, and subscribes to `settingsManager.$launchAtLogin`. Confirmed.
+- **NSCalendarsUsageDescription in Info.plist**: Both `NSCalendarsUsageDescription` and `NSCalendarsFullAccessUsageDescription` present. Confirmed.
+- **Info.plist bundled in binary**: `__TEXT/__info_plist` section verified via otool. Confirmed.
+- **Assets.xcassets removed**: No `.xcassets` directory or `resources:` entry found in Package.swift. Confirmed.
+- **MenuBarClockLabel reactive**: Takes `@ObservedObject appState` and `@ObservedObject settings`; call site in ChimeTimeApp.swift passes live references. Confirmed.
+- **Pomodoro stops on disable**: AppDelegate subscribes to `settingsManager.$pomodoroEnabled` and calls `pomodoroTimer?.stop()` when toggled off. Confirmed.
+- **Git initialized, clean tree**: 2 commits, working tree clean; all build artifacts excluded by .gitignore. Confirmed.
+- **LICENSE (MIT)**: Present, No Sleep Lab copyright. Confirmed.
+
+### Discrepancies found
+
+None material. One minor observation: the git repository has only 2 commits (initial commit adding all 39 files + worklog commit). This is consistent with the worklog's statement that git was initialized from scratch by the overnight agent — the pre-existing source was not tracked in version control before this run.
+
+### No fixes applied
+
+Build and tests passed clean on first attempt. No build-breaking issues found. No commits made by QA reviewer.
+
+### Remaining issues (confirming worklog's list)
+
+- Ad-hoc signature only — requires Apple Developer ID for distribution.
+- No app icon (AppIcon.icns missing).
+- Distribution channel decision pending.
+- About-tab URLs (nosleeplab.com, github.com/nosleeplab/ChimeTime) unverified.
