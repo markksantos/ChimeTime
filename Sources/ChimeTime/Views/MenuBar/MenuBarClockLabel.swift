@@ -11,7 +11,7 @@ struct MenuBarClockLabel: View {
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
-        if settings.menuBarClockEnabled {
+        if settings.effectiveMenuBarClockEnabled {
             Text(formattedTime)
                 .monospacedDigit()
                 .onReceive(timer) { currentTime = $0 }

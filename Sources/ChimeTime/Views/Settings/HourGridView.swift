@@ -31,7 +31,7 @@ struct HourGridView: View {
                     HourCell(
                         hour: hour,
                         isActive: !settings.disabledHours.contains(hour),
-                        accentColor: settings.accentColor.color,
+                        accentColor: settings.effectiveAccentColor.color,
                         reduceMotion: settings.effectiveReduceMotion
                     ) {
                         toggleHour(hour)

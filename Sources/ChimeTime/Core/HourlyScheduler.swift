@@ -97,7 +97,7 @@ final class HourlyScheduler: ObservableObject {
         let fireDate: Date
         let chimeType: ChimeType
 
-        if settingsManager.halfHourChimeEnabled {
+        if settingsManager.effectiveHalfHourChimeEnabled {
             let nextHalf = Self.nextHalfHourBoundary(from: now)
             if nextHalf < nextHour {
                 fireDate = nextHalf

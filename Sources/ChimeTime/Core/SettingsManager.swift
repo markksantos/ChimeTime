@@ -4,6 +4,16 @@ import AppKit
 
 final class SettingsManager: ObservableObject {
     private let defaults = UserDefaults.standard
+
+    /// Whether the Pro unlock is owned. Every `effective*` accessor below
+    /// consults this, so a free user gets the free default even if the stored
+    /// preference says otherwise (e.g. someone ran `defaults write`, or they
+    /// configured everything during a refund window).
+    let entitlement: ProEntitlement
+    private var entitlementObserver: AnyCancellable?
+
+    var isPro: Bool { entitlement.isPro }
+
     private enum Keys {
         static let isEnabled = "chimetime.isEnabled"
         static let displayDuration = "chimetime.displayDuration"
@@ -28,8 +38,6 @@ final class SettingsManager: ObservableObject {
         // Feature 1: Half-Hour Chime
         static let halfHourChimeEnabled = "chimetime.halfHourChimeEnabled"
         static let halfHourChimeSound = "chimetime.halfHourChimeSound"
-        // Feature 2: Focus Mode
-        static let focusModeIntegration = "chimetime.focusModeIntegration"
         // Feature 3: Custom Sounds
         static let customSoundNames = "chimetime.customSoundNames"
         static let selectedCustomSound = "chimetime.selectedCustomSound"
@@ -155,11 +163,6 @@ final class SettingsManager: ObservableObject {
         didSet { defaults.set(halfHourChimeSound, forKey: Keys.halfHourChimeSound) }
     }
 
-    // Feature 2: Focus Mode
-    @Published var focusModeIntegration: Bool {
-        didSet { defaults.set(focusModeIntegration, forKey: Keys.focusModeIntegration) }
-    }
-
     // Feature 3: Custom Sounds
     @Published var customSoundNames: [String] {
         didSet { defaults.set(customSoundNames, forKey: Keys.customSoundNames) }
@@ -249,7 +252,9 @@ final class SettingsManager: ObservableObject {
         return !sample.contains(formatter.amSymbol) && !sample.contains(formatter.pmSymbol)
     }
 
-    init() {
+    init(entitlement: ProEntitlement = ProEntitlement()) {
+        self.entitlement = entitlement
+
         // Load from UserDefaults with sensible defaults
         self.isEnabled = defaults.object(forKey: Keys.isEnabled) as? Bool ?? true
         self.displayDuration = defaults.object(forKey: Keys.displayDuration) as? Double ?? 4.0
@@ -276,8 +281,6 @@ final class SettingsManager: ObservableObject {
         // Feature 1: Half-Hour Chime
         self.halfHourChimeEnabled = defaults.object(forKey: Keys.halfHourChimeEnabled) as? Bool ?? false
         self.halfHourChimeSound = defaults.string(forKey: Keys.halfHourChimeSound) ?? "tick"
-        // Feature 2: Focus Mode
-        self.focusModeIntegration = defaults.object(forKey: Keys.focusModeIntegration) as? Bool ?? false
         // Feature 3: Custom Sounds
         self.customSoundNames = defaults.stringArray(forKey: Keys.customSoundNames) ?? []
         self.selectedCustomSound = defaults.string(forKey: Keys.selectedCustomSound) ?? ""
@@ -303,7 +306,61 @@ final class SettingsManager: ObservableObject {
         // Feature 10: Menu Bar Clock
         self.menuBarClockEnabled = defaults.object(forKey: Keys.menuBarClockEnabled) as? Bool ?? false
         self.menuBarClockFormat = defaults.string(forKey: Keys.menuBarClockFormat) ?? "h:mm"
+
+        // Republish when the Pro entitlement changes so every view bound to a
+        // gated `effective*` value refreshes the moment the unlock lands.
+        entitlementObserver = entitlement.$isPro
+            .dropFirst()
+            .sink { [weak self] _ in self?.objectWillChange.send() }
     }
+
+    // MARK: - Pro gating
+    //
+    // Free tier: the hourly notch chime, master on/off, preview, Quiet Hours,
+    // Launch at Login, and Speak Time — everything needed to use the app
+    // safely without paying. Pro unlocks configuration and advanced features.
+    //
+    // Read these `effective*` values everywhere a feature is actually
+    // consumed. Reading the raw stored property at a consumption site is a
+    // paywall bypass.
+    //
+    // Free defaults are the *nice* defaults, so a free user sees a polished
+    // app; what Pro buys is the ability to choose.
+
+    // Appearance
+    var effectiveDisplayDuration: Double { isPro ? displayDuration : 4.0 }
+    var effectiveNotificationSize: NotificationSize { isPro ? notificationSize : .medium }
+    var effectiveShowDateInNotification: Bool { isPro ? showDateInNotification : true }
+    var effectiveAppTheme: AppTheme { isPro ? appTheme : .auto }
+    var effectiveAccentColor: AccentColor { isPro ? accentColor : .blue }
+    var effectiveDropdownNSColor: NSColor {
+        isPro ? dropdownNSColor : NSColor(red: 0, green: 0, blue: 0, alpha: 0.95)
+    }
+
+    // Sound selection (Sound *mode*, incl. Speak Time, stays free)
+    var effectiveSelectedChimeSound: String { isPro ? selectedChimeSound : "gentle" }
+    var effectiveSelectedCustomSound: String { isPro ? selectedCustomSound : "" }
+
+    // Advanced chiming
+    var effectiveHalfHourChimeEnabled: Bool { isPro && halfHourChimeEnabled }
+    var effectiveHalfHourChimeSound: String { isPro ? halfHourChimeSound : "tick" }
+    var effectiveChimeCountEnabled: Bool { isPro && chimeCountEnabled }
+    var effectiveChimeCountMax: Int { isPro ? chimeCountMax : 12 }
+
+    // Productivity + convenience
+    var effectiveHistoryEnabled: Bool { isPro && historyEnabled }
+    var effectiveGlobalHotkeyEnabled: Bool { isPro && globalHotkeyEnabled }
+    var effectivePomodoroEnabled: Bool { isPro && pomodoroEnabled }
+    var effectiveMenuBarClockEnabled: Bool { isPro && menuBarClockEnabled }
+    var effectiveCalendarQuietEnabled: Bool { isPro && calendarQuietEnabled }
+    var effectiveDisplayPreference: String { isPro ? displayPreference : "main" }
+
+    /// The per-hour schedule grid. Free users chime on every hour that isn't
+    /// covered by Quiet Hours.
+    var effectiveDisabledHours: Set<Int> { isPro ? disabledHours : [] }
+
+    /// Whether a given feature is currently locked, for lock badges in the UI.
+    func isLocked(_ feature: ProFeature) -> Bool { !isPro }
 
     /// Check if a given hour (0-23) is within quiet hours
     func isInQuietHours(_ hour: Int) -> Bool {
@@ -316,9 +373,10 @@ final class SettingsManager: ObservableObject {
         }
     }
 
-    /// Check if a given hour (0-23) is disabled
+    /// Check if a given hour (0-23) is disabled by the per-hour schedule grid.
+    /// Pro-gated: free users chime every hour that Quiet Hours doesn't cover.
     func isHourDisabled(_ hour: Int) -> Bool {
-        disabledHours.contains(hour)
+        effectiveDisabledHours.contains(hour)
     }
 
     /// Check if a given hour should be suppressed (quiet or disabled)

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd:*)",
+      "Bash(cd \"/Users/markksantos/Documents/Programming Projects\" && git check-ignore -v ChimeTime/ChimeTime/Sources/ChimeTime/Core/AppState.swift 2>&1)",
+      "Bash(ssh:*)"
+    ]
+  }
+}

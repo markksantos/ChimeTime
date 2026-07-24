@@ -35,13 +35,13 @@ struct MenuBarIcon: View {
             .disabled(!appState.isEnabled)
 
             // Pomodoro controls
-            if settings.pomodoroEnabled, let pomodoro = appState.pomodoroTimer {
+            if settings.effectivePomodoroEnabled, let pomodoro = appState.pomodoroTimer {
                 Divider()
                 pomodoroSection(pomodoro)
             }
 
             // Recent chimes history
-            if settings.historyEnabled, let history = appState.chimeHistory, !history.recentEntries.isEmpty {
+            if settings.effectiveHistoryEnabled, let history = appState.chimeHistory, !history.recentEntries.isEmpty {
                 Divider()
                 historySection(history)
             }

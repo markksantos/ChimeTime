@@ -7,7 +7,7 @@ final class NotchAnimator: ObservableObject {
     let retractDuration: Double = 0.35
 
     var holdDuration: Double {
-        settingsManager.displayDuration
+        settingsManager.effectiveDisplayDuration
     }
 
     private let settingsManager: SettingsManager
@@ -34,8 +34,8 @@ final class NotchAnimator: ObservableObject {
             notchWindow = nil
         }
 
-        let size = settingsManager.notificationSize
-        let targetScreen = ScreenSelector.screen(for: settingsManager.displayPreference)
+        let size = settingsManager.effectiveNotificationSize
+        let targetScreen = ScreenSelector.screen(for: settingsManager.effectiveDisplayPreference)
 
         // Create new window
         let window = NotchWindow(size: size, screen: targetScreen)
@@ -48,10 +48,10 @@ final class NotchAnimator: ObservableObject {
         let hostView = NSHostingView(
             rootView: NotchDropView(
                 date: date,
-                showDate: settingsManager.showDateInNotification,
+                showDate: settingsManager.effectiveShowDateInNotification,
                 use24Hour: settingsManager.effective24HourFormat,
                 size: size,
-                backgroundColor: settingsManager.dropdownNSColor,
+                backgroundColor: settingsManager.effectiveDropdownNSColor,
                 customLabel: customLabel
             )
         )

@@ -502,18 +502,6 @@ private struct ScheduleTab: View {
                 .padding(4)
             }
 
-            // Feature 2: Focus Mode Integration
-            GroupBox {
-                VStack(spacing: 12) {
-                    SettingRow("Focus Mode", description: "Suppress chimes when macOS Focus/DND is active") {
-                        Toggle("", isOn: $settings.focusModeIntegration)
-                            .toggleStyle(.switch)
-                            .labelsHidden()
-                    }
-                }
-                .padding(4)
-            }
-
             // Feature 9: Calendar-Aware Quiet Hours
             GroupBox {
                 VStack(spacing: 12) {

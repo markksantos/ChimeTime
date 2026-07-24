@@ -103,6 +103,7 @@ final class AppState: ObservableObject {
 
     // References to managers (set during app init)
     var settingsManager: SettingsManager?
+    var proStore: ProStore?
     var scheduler: HourlyScheduler?
     var chimeHistory: ChimeHistory?
     var pomodoroTimer: PomodoroTimer?

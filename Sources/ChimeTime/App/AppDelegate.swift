@@ -4,7 +4,8 @@ import Combine
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let appState = AppState()
-    let settingsManager = SettingsManager()
+    let settingsManager: SettingsManager
+    private(set) var proStore: ProStore!
     private var scheduler: HourlyScheduler?
     private var notchAnimator: NotchAnimator?
     private var chimeSoundPlayer: ChimeSoundPlayer?
@@ -13,7 +14,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var cancellables = Set<AnyCancellable>()
 
     // New managers for features
-    private var focusModeMonitor: FocusModeMonitor?
     private var calendarMonitor: CalendarMonitor?
     private var globalHotkeyMonitor: GlobalHotkeyMonitor?
     private var chimeHistory: ChimeHistory?
@@ -21,7 +21,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var customSoundManager: CustomSoundManager?
     private let loginItemManager = LoginItemManager()
 
+    override init() {
+        self.settingsManager = SettingsManager(entitlement: ProEntitlement())
+        super.init()
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Create the store first so the `Transaction.updates` listener is
+        // running before anything else — it delivers purchases completed on
+        // another Mac, or ones interrupted mid-flight.
+        proStore = ProStore(entitlement: settingsManager.entitlement)
+        appState.proStore = proStore
+
         // Wire up state
         appState.settingsManager = settingsManager
 
@@ -31,9 +42,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Create notch animator
         notchAnimator = NotchAnimator(settingsManager: settingsManager)
-
-        // Feature 2: Focus Mode Monitor
-        focusModeMonitor = FocusModeMonitor()
 
         // Feature 3: Custom Sound Manager
         customSoundManager = CustomSoundManager(settingsManager: settingsManager)
@@ -56,13 +64,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let self else { return }
             let label = phase == .work ? "Break Time!" : "Work Time!"
             self.notchAnimator?.showNotification(withLabel: label)
-            self.chimeSoundPlayer?.play(sound: self.settingsManager.selectedChimeSound)
+            self.chimeSoundPlayer?.play(sound: self.settingsManager.effectiveSelectedChimeSound)
         }
         appState.pomodoroTimer = pomodoroTimer
 
         // Feature 9: Calendar Monitor (lazy access request)
         calendarMonitor = CalendarMonitor()
-        if settingsManager.calendarQuietEnabled {
+        if settingsManager.effectiveCalendarQuietEnabled {
             calendarMonitor?.requestAccess { _ in }
         }
 
@@ -133,6 +141,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             .store(in: &cancellables)
 
+        // React to the Pro unlock landing (or being revoked/refunded): every
+        // gated feature has to start or stop for real, not just in the UI.
+        settingsManager.entitlement.$isPro
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isPro in
+                guard let self else { return }
+                self.setupHotkey()
+                if !isPro, self.pomodoroTimer?.phase != .idle {
+                    self.pomodoroTimer?.stop()
+                }
+                if isPro, self.settingsManager.calendarQuietEnabled {
+                    self.calendarMonitor?.requestAccess { _ in }
+                }
+                // Half-hour chiming changes the next fire boundary.
+                if self.settingsManager.isEnabled {
+                    self.scheduler?.handleSystemWake()
+                }
+            }
+            .store(in: &cancellables)
+
         // React to pomodoro setting changes
         settingsManager.$pomodoroWorkMinutes
             .dropFirst()
@@ -147,7 +176,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsManager.$calendarQuietEnabled
             .dropFirst()
             .sink { [weak self] enabled in
-                if enabled { self?.calendarMonitor?.requestAccess { _ in } }
+                guard let self, enabled, self.settingsManager.isPro else { return }
+                self.calendarMonitor?.requestAccess { _ in }
+            }
+            .store(in: &cancellables)
+
+        // Half-hour chiming changes which boundary fires next.
+        settingsManager.$halfHourChimeEnabled
+            .dropFirst()
+            .sink { [weak self] _ in
+                guard let self, self.settingsManager.isEnabled else { return }
+                self.scheduler?.handleSystemWake()
             }
             .store(in: &cancellables)
     }
@@ -179,7 +218,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func setupHotkey() {
-        if settingsManager.globalHotkeyEnabled {
+        if settingsManager.effectiveGlobalHotkeyEnabled {
             globalHotkeyMonitor?.onHotkey = { [weak self] in
                 DispatchQueue.main.async {
                     self?.appState.isEnabled.toggle()
@@ -198,14 +237,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
 
-            // Feature 2: Focus Mode suppression
-            if self.settingsManager.focusModeIntegration,
-               self.focusModeMonitor?.isFocusActive == true {
-                return
-            }
-
             // Feature 9: Calendar suppression
-            if self.settingsManager.calendarQuietEnabled,
+            if self.settingsManager.effectiveCalendarQuietEnabled,
                self.calendarMonitor?.hasBusyEvent(at: date, calendarIdentifier: self.settingsManager.calendarIdentifier) == true {
                 return
             }
@@ -221,11 +254,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // For half-hour chimes, play the half-hour sound and skip speech
             if chimeType == .halfHour {
                 if soundMode != .none {
-                    self.chimeSoundPlayer?.play(sound: self.settingsManager.halfHourChimeSound)
+                    self.chimeSoundPlayer?.play(sound: self.settingsManager.effectiveHalfHourChimeSound)
                 }
             } else {
                 // Hour chime — check for custom sound first
-                let useCustom = !self.settingsManager.selectedCustomSound.isEmpty
+                let useCustom = !self.settingsManager.effectiveSelectedCustomSound.isEmpty
                 switch soundMode {
                 case .none:
                     break
@@ -260,8 +293,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
 
             // Feature 4: Record to history
-            if self.settingsManager.historyEnabled {
-                let soundName = chimeType == .halfHour ? self.settingsManager.halfHourChimeSound : self.settingsManager.selectedChimeSound
+            if self.settingsManager.effectiveHistoryEnabled {
+                let soundName = chimeType == .halfHour
+                    ? self.settingsManager.effectiveHalfHourChimeSound
+                    : self.settingsManager.effectiveSelectedChimeSound
                 let record = ChimeRecord(date: date, chimeType: chimeType, soundPlayed: soundName)
                 self.chimeHistory?.addRecord(record, maxEntries: self.settingsManager.historyMaxEntries)
             }
@@ -269,11 +304,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func playChimeWithCount() {
-        let sound = settingsManager.selectedChimeSound
-        if settingsManager.chimeCountEnabled {
+        let sound = settingsManager.effectiveSelectedChimeSound
+        if settingsManager.effectiveChimeCountEnabled {
             let hour = Calendar.current.component(.hour, from: Date())
             let twelveHour = hour % 12 == 0 ? 12 : hour % 12
-            let count = min(twelveHour, settingsManager.chimeCountMax)
+            let count = min(twelveHour, settingsManager.effectiveChimeCountMax)
             chimeSoundPlayer?.playRepeated(sound: sound, count: count)
         } else {
             chimeSoundPlayer?.play(sound: sound)
@@ -281,7 +316,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func playCustomOrBuiltin() {
-        let customName = settingsManager.selectedCustomSound
+        let customName = settingsManager.effectiveSelectedCustomSound
         if let url = customSoundManager?.soundURL(for: customName) {
             chimeSoundPlayer?.playCustomSound(url: url)
         } else {
