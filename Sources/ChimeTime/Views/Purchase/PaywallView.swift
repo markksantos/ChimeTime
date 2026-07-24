@@ -27,8 +27,17 @@ struct PaywallView: View {
                 purchaseBar
             }
         }
-        .frame(width: 520, height: entitlement.isPro ? 320 : 620)
+        // Tall enough that all twelve features fit without the last row being
+        // clipped — a cut-off feature list reads as a rendering bug.
+        .frame(width: 520, height: entitlement.isPro ? 320 : 700)
         .background(.background)
+        .task {
+            // Retry the product load here, not just at launch. If the first
+            // attempt failed (offline at startup), the Buy button would
+            // otherwise stay dead until the app was relaunched. `loadProduct`
+            // no-ops once the product is cached.
+            await store.loadProduct()
+        }
     }
 
     // MARK: - Header
