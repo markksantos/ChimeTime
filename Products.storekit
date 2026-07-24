@@ -1,0 +1,41 @@
+{
+  "identifier" : "B1E4F0C2-7A3D-4E58-9C61-2F8A5D0B4E77",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "6A2C9D14-8B7E-4F03-A5D6-1C93E7B20F48",
+      "localizations" : [
+        {
+          "description" : "Unlock appearance customization, every chime sound, custom sounds, half-hour chimes, chime count, chime history, a global shortcut, Pomodoro, custom schedules, and a menu bar clock.",
+          "displayName" : "ChimeTime Pro",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.nosleeplab.chimetime.pro",
+      "referenceName" : "ChimeTime Pro",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "",
+    "_developerTeamID" : "",
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 0,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

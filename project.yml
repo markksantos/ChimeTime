@@ -1,0 +1,87 @@
+# XcodeGen spec for the Mac App Store build.
+#
+# The Swift package remains the source of truth for `swift build` / `swift test`;
+# this project exists because archiving, signing, provisioning, StoreKit testing,
+# and App Store Connect upload all require a real .xcodeproj.
+#
+# Regenerate after adding files:   xcodegen generate
+# The .xcodeproj is gitignored on purpose — project.yml is the checked-in truth.
+#
+# ⚠️ TWO PLACEHOLDERS TO REPLACE BEFORE SUBMITTING (use scripts/set-identity.sh):
+#   1. PRODUCT_BUNDLE_IDENTIFIER — must match the App ID in the Developer portal
+#   2. DEVELOPMENT_TEAM — your 10-character Apple Developer Team ID
+
+name: ChimeTime
+
+options:
+  bundleIdPrefix: com.nosleeplab
+  deploymentTarget:
+    macOS: "13.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: ""            # TODO: your Team ID
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_HARDENED_RUNTIME: YES
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: NO
+    GCC_TREAT_WARNINGS_AS_ERRORS: NO
+    COMBINE_HIDPI_IMAGES: YES
+
+targets:
+  ChimeTime:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/ChimeTime
+        name: ChimeTime
+    settings:
+      base:
+        PRODUCT_NAME: ChimeTime
+        PRODUCT_BUNDLE_IDENTIFIER: com.nosleeplab.chimetime
+        INFOPLIST_FILE: Info.plist
+        CODE_SIGN_ENTITLEMENTS: ChimeTime.entitlements
+        # Menu bar agent: no Dock icon (also set via LSUIElement in Info.plist).
+        LSUIElement: YES
+        # Needed because the app links StoreKit and EventKit.
+        OTHER_LDFLAGS: ""
+    dependencies:
+      - sdk: StoreKit.framework
+      - sdk: EventKit.framework
+      - sdk: ServiceManagement.framework
+      - sdk: Carbon.framework
+      - sdk: AVFoundation.framework
+
+  ChimeTimeTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/ChimeTimeTests
+        name: ChimeTimeTests
+    dependencies:
+      - target: ChimeTime
+    settings:
+      base:
+        BUNDLE_LOADER: "$(TEST_HOST)"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/ChimeTime.app/Contents/MacOS/ChimeTime"
+
+schemes:
+  ChimeTime:
+    build:
+      targets:
+        ChimeTime: all
+        ChimeTimeTests: [test]
+    run:
+      config: Debug
+      # Lets the paywall be exercised locally without App Store Connect.
+      storeKitConfiguration: Products.storekit
+    test:
+      config: Debug
+      targets:
+        - ChimeTimeTests
+    archive:
+      config: Release

@@ -1,0 +1,130 @@
+# ChimeTime — App Store launch checklist
+
+The in-app purchase is implemented and tested. What follows is everything
+between the current repo and a live listing. Items marked **BLOCKER** must be
+done before a build can even be uploaded.
+
+---
+
+## 1. Identity (BLOCKER)
+
+Nothing can be signed or uploaded until the bundle ID and Team ID are real.
+The placeholders are `com.nosleeplab.chimetime` and an empty `DEVELOPMENT_TEAM`.
+
+```bash
+./scripts/set-identity.sh com.yourcompany.chimetime YOURTEAMID
+```
+
+That one command updates `Info.plist`, `StoreConfiguration.swift`,
+`Products.storekit`, and `project.yml` together, then regenerates the Xcode
+project. They must agree — a mismatch between the app's bundle ID and the IAP
+product ID is the usual cause of "Cannot connect to iTunes Store".
+
+## 2. Certificates (BLOCKER)
+
+This Mac currently has only an **Apple Development** certificate. Mac App Store
+distribution additionally needs:
+
+- **Apple Distribution** (signs the app)
+- **Mac Installer Distribution** (signs the `.pkg` that gets uploaded)
+
+Easiest path: Xcode → Settings → Accounts → Manage Certificates → `+`. Then let
+automatic signing create the provisioning profile once the App ID exists.
+
+## 3. App icon (BLOCKER)
+
+There is no icon. `Resources/AppIcon.icns` does not exist and the project has no
+asset catalog. The App Store requires a 1024×1024 icon.
+
+Once you have `Assets.xcassets` with an `AppIcon` set, add to `project.yml`
+under the target's `settings.base`:
+
+```yaml
+ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+```
+
+and add `Assets.xcassets` to the target's `sources`, then `xcodegen generate`.
+
+## 4. App Store Connect
+
+1. Register the App ID from step 1 in the Developer portal.
+2. Create the app record in App Store Connect.
+3. Create the in-app purchase:
+   - Type: **Non-Consumable**
+   - Product ID: **`<your-bundle-id>.pro`** (exactly what `set-identity.sh` printed)
+   - Reference name: `ChimeTime Pro`
+   - Price: **Tier 5 ($4.99)**
+   - Display name + description: reuse the copy in `Products.storekit`
+   - Add a review screenshot of the paywall
+4. Join the **Small Business Program** if you haven't — it drops Apple's cut
+   from 30% to 15% under $1M/year. On a $4.99 unlock that's $4.24 vs $3.49 per
+   sale, and it applies to this app either way.
+
+> A new IAP must be submitted **together with the app's first build**. Submitting
+> the app alone leaves the purchase in "Waiting for Review" and every buy attempt
+> fails.
+
+## 5. Required metadata
+
+- **Privacy policy URL** — mandatory. ChimeTime collects nothing; a short page
+  saying so is enough.
+- **Support URL** — mandatory.
+- **App privacy questionnaire** — answer "Data Not Collected". The app has no
+  analytics, no network calls except StoreKit, and stores everything in
+  UserDefaults and its own container.
+- **Screenshots** — at least one 1280×800 or 1440×900. Show the notch drop, the
+  settings window, and the paywall.
+
+## 6. Testing the purchase before shipping
+
+**Locally**, without App Store Connect — the scheme already points at
+`Products.storekit`:
+
+1. Open `ChimeTime.xcodeproj`, Run.
+2. The paywall shows a real $4.99 price and purchases complete instantly.
+3. Xcode → Debug → StoreKit → Manage Transactions to refund/reset and re-test
+   the locked state.
+
+There is also a DEBUG-only override for exercising Pro UI without any store:
+
+```bash
+defaults write com.nosleeplab.chimetime chimetime.debugForcePro -bool YES
+```
+
+It is compiled out of Release builds, so it cannot be used to bypass the paywall
+in a shipped app.
+
+**In sandbox**, after the IAP exists in App Store Connect: create a Sandbox
+Apple ID in Users and Access, sign into it in System Settings → Developer, then
+run a Release build.
+
+## 7. Archive and upload
+
+```bash
+xcodegen generate
+xcodebuild -project ChimeTime.xcodeproj -scheme ChimeTime \
+    -configuration Release archive -archivePath build/ChimeTime.xcarchive
+```
+
+Then Xcode → Window → Organizer → Distribute App → App Store Connect.
+
+---
+
+## What App Review will look at
+
+- **Restore Purchases** exists and works — it's in the paywall and in the About
+  tab. Reviewers check for this on every non-consumable.
+- **The free tier is genuinely usable.** Hourly chiming, Quiet Hours, and Launch
+  at Login are all free. An app that locks its core function behind IAP gets
+  rejected under 3.1.1.
+- **No mention of external payment** anywhere in the app.
+- **The Focus Mode feature was removed**, not hidden. It read preference
+  domains the sandbox blocks, so it could never have worked in a shipped build.
+
+## Known gaps, deliberately
+
+- **Custom sound files are copied into the sandbox container.** Existing users
+  of a pre-sandbox local build won't see previously imported sounds, since the
+  container path changes. Not an issue for a first release.
+- **`CFBundleVersion` is `1.0`.** Bump it on every upload; App Store Connect
+  rejects a duplicate build number.
