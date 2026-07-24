@@ -48,6 +48,17 @@ struct MenuBarIcon: View {
 
             Divider()
 
+            if !settings.isPro {
+                Button {
+                    appState.onOpenSettings?()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        appState.isPaywallPresented = true
+                    }
+                } label: {
+                    Label("Unlock ChimeTime Pro", systemImage: "sparkles")
+                }
+            }
+
             // About
             Button("About ChimeTime") {
                 appState.onOpenSettings?()

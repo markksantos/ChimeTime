@@ -40,6 +40,24 @@ struct SettingsView: View {
             }
             .listStyle(.sidebar)
             .navigationSplitViewColumnWidth(min: 160, ideal: 180, max: 200)
+            .safeAreaInset(edge: .bottom) {
+                if !settings.isPro {
+                    Button {
+                        appState.isPaywallPresented = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "sparkles")
+                            Text("Unlock Pro")
+                                .font(.callout.weight(.medium))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.regular)
+                    .padding(10)
+                }
+            }
         } detail: {
             VStack(spacing: 0) {
                 // Top bar with preview button
@@ -70,6 +88,15 @@ struct SettingsView: View {
         .navigationSplitViewStyle(.prominentDetail)
         .toolbar(.hidden)
         .frame(minWidth: 580, minHeight: 440)
+        .sheet(isPresented: $appState.isPaywallPresented) {
+            if let store = appState.proStore {
+                PaywallView(
+                    store: store,
+                    entitlement: settings.entitlement,
+                    onDismiss: { appState.isPaywallPresented = false }
+                )
+            }
+        }
     }
 
     @ViewBuilder
@@ -82,17 +109,23 @@ struct SettingsView: View {
         case .sound:
             SoundTab()
                 .environmentObject(settings)
+                .environmentObject(appState)
         case .schedule:
             ScheduleTab()
                 .environmentObject(settings)
+                .environmentObject(appState)
         case .appearance:
             AppearanceTab()
                 .environmentObject(settings)
+                .environmentObject(appState)
         case .pomodoro:
             PomodoroTab()
                 .environmentObject(settings)
+                .environmentObject(appState)
         case .about:
             AboutTab()
+                .environmentObject(settings)
+                .environmentObject(appState)
         }
     }
 }
@@ -159,6 +192,9 @@ private struct GeneralTab: View {
     @EnvironmentObject var settings: SettingsManager
     @EnvironmentObject var appState: AppState
 
+    private var locked: Bool { !settings.isPro }
+    private func unlock() { appState.isPaywallPresented = true }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             SectionHeader("General", subtitle: "Core app behavior and notification display")
@@ -182,7 +218,7 @@ private struct GeneralTab: View {
                 .padding(4)
             }
 
-            GroupBox {
+            ProSection(.appearance, title: "Notification Display", isLocked: locked, onUnlock: unlock) {
                 VStack(spacing: 12) {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
@@ -220,9 +256,9 @@ private struct GeneralTab: View {
             }
 
             // Feature 5: Keyboard Shortcut
-            GroupBox {
+            ProSection(.globalShortcut, isLocked: locked, onUnlock: unlock) {
                 VStack(spacing: 12) {
-                    SettingRow("Global Shortcut", description: "Toggle chime on/off from anywhere") {
+                    SettingRow("Enable Global Shortcut", description: "Toggle chime on/off from anywhere") {
                         Toggle("", isOn: $settings.globalHotkeyEnabled)
                             .toggleStyle(.switch)
                             .labelsHidden()
@@ -247,9 +283,9 @@ private struct GeneralTab: View {
             }
 
             // Feature 4: Chime History
-            GroupBox {
+            ProSection(.chimeHistory, isLocked: locked, onUnlock: unlock) {
                 VStack(spacing: 12) {
-                    SettingRow("Chime History", description: "Log recent chimes in menu bar") {
+                    SettingRow("Enable Chime History", description: "Log recent chimes in menu bar") {
                         Toggle("", isOn: $settings.historyEnabled)
                             .toggleStyle(.switch)
                             .labelsHidden()
@@ -275,6 +311,10 @@ private struct GeneralTab: View {
 
 private struct SoundTab: View {
     @EnvironmentObject var settings: SettingsManager
+    @EnvironmentObject var appState: AppState
+
+    private var locked: Bool { !settings.isPro }
+    private func unlock() { appState.isPaywallPresented = true }
 
     private let chimeSounds = ["gentle", "tick", "wood", "silent"]
 
@@ -298,12 +338,8 @@ private struct SoundTab: View {
             }
 
             if settings.soundMode != .none {
-                GroupBox {
+                ProSection(.chimeSound, title: "Chime Sound", isLocked: locked, onUnlock: unlock) {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Chime Sound")
-                            .font(.body.weight(.medium))
-                            .padding(.bottom, 4)
-
                         ForEach(chimeSounds, id: \.self) { sound in
                             SoundPreviewRow(
                                 soundName: sound,
@@ -376,6 +412,7 @@ private struct SoundTab: View {
                 .disabled(settings.soundMode == .speakTime)
             }
 
+
             if settings.soundMode == .speakTime || settings.soundMode == .chimeAndSpeak {
                 GroupBox {
                     VStack(alignment: .leading, spacing: 8) {
@@ -397,9 +434,9 @@ private struct SoundTab: View {
             }
 
             // Feature 1: Half-Hour Chime
-            GroupBox {
+            ProSection(.halfHourChime, isLocked: locked, onUnlock: unlock) {
                 VStack(spacing: 12) {
-                    SettingRow("Half-Hour Chime", description: "Play a sound at the 30-minute mark") {
+                    SettingRow("Enable Half-Hour Chime", description: "Play a sound at the 30-minute mark") {
                         Toggle("", isOn: $settings.halfHourChimeEnabled)
                             .toggleStyle(.switch)
                             .labelsHidden()
@@ -422,9 +459,9 @@ private struct SoundTab: View {
             }
 
             // Feature 7: Chime Count
-            GroupBox {
+            ProSection(.chimeCount, isLocked: locked, onUnlock: unlock) {
                 VStack(spacing: 12) {
-                    SettingRow("Chime Count", description: "Repeat chime based on the current hour") {
+                    SettingRow("Enable Chime Count", description: "Repeat chime based on the current hour") {
                         Toggle("", isOn: $settings.chimeCountEnabled)
                             .toggleStyle(.switch)
                             .labelsHidden()
@@ -450,12 +487,16 @@ private struct SoundTab: View {
 
 private struct ScheduleTab: View {
     @EnvironmentObject var settings: SettingsManager
+    @EnvironmentObject var appState: AppState
+
+    private var locked: Bool { !settings.isPro }
+    private func unlock() { appState.isPaywallPresented = true }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             SectionHeader("Schedule", subtitle: "Choose which hours to receive notifications")
 
-            GroupBox {
+            ProSection(.customSchedule, isLocked: locked, onUnlock: unlock) {
                 HourGridView()
                     .environmentObject(settings)
                     .padding(4)
@@ -503,9 +544,9 @@ private struct ScheduleTab: View {
             }
 
             // Feature 9: Calendar-Aware Quiet Hours
-            GroupBox {
+            ProSection(.calendarQuietHours, isLocked: locked, onUnlock: unlock) {
                 VStack(spacing: 12) {
-                    SettingRow("Calendar Quiet Hours", description: "Suppress chimes during busy calendar events") {
+                    SettingRow("Enable Calendar Quiet Hours", description: "Suppress chimes during busy calendar events") {
                         Toggle("", isOn: $settings.calendarQuietEnabled)
                             .toggleStyle(.switch)
                             .labelsHidden()
@@ -537,14 +578,18 @@ private struct ScheduleTab: View {
 
 private struct AppearanceTab: View {
     @EnvironmentObject var settings: SettingsManager
+    @EnvironmentObject var appState: AppState
 
     @State private var dropdownColor: Color = .black
+
+    private var locked: Bool { !settings.isPro }
+    private func unlock() { appState.isPaywallPresented = true }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             SectionHeader("Appearance", subtitle: "Visual style of the notification")
 
-            GroupBox {
+            ProSection(.appearance, title: "Theme & Color", isLocked: locked, onUnlock: unlock) {
                 VStack(spacing: 12) {
                     SettingRow("Theme") {
                         Picker("", selection: $settings.appTheme) {
@@ -637,7 +682,7 @@ private struct AppearanceTab: View {
             }
 
             // Feature 6: Multi-Monitor Support
-            GroupBox {
+            ProSection(.multiMonitor, isLocked: locked, onUnlock: unlock) {
                 VStack(spacing: 12) {
                     SettingRow("Display", description: "Which screen shows the notch notification") {
                         Picker("", selection: $settings.displayPreference) {
@@ -653,9 +698,9 @@ private struct AppearanceTab: View {
             }
 
             // Feature 10: Menu Bar Clock
-            GroupBox {
+            ProSection(.menuBarClock, isLocked: locked, onUnlock: unlock) {
                 VStack(spacing: 12) {
-                    SettingRow("Menu Bar Clock", description: "Show a live clock instead of icon") {
+                    SettingRow("Enable Menu Bar Clock", description: "Show a live clock instead of icon") {
                         Toggle("", isOn: $settings.menuBarClockEnabled)
                             .toggleStyle(.switch)
                             .labelsHidden()
@@ -693,12 +738,16 @@ private struct AppearanceTab: View {
 
 private struct PomodoroTab: View {
     @EnvironmentObject var settings: SettingsManager
+    @EnvironmentObject var appState: AppState
+
+    private var locked: Bool { !settings.isPro }
+    private func unlock() { appState.isPaywallPresented = true }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             SectionHeader("Pomodoro", subtitle: "Work/break cycle timer with notifications")
 
-            GroupBox {
+            ProSection(.pomodoro, isLocked: locked, onUnlock: unlock) {
                 VStack(spacing: 12) {
                     SettingRow("Enable Pomodoro", description: "Show timer controls in the menu bar") {
                         Toggle("", isOn: $settings.pomodoroEnabled)
@@ -709,7 +758,7 @@ private struct PomodoroTab: View {
                 .padding(4)
             }
 
-            if settings.pomodoroEnabled {
+            if settings.effectivePomodoroEnabled {
                 GroupBox {
                     VStack(spacing: 12) {
                         SettingRow("Work Duration") {
@@ -738,6 +787,9 @@ private struct PomodoroTab: View {
 // MARK: - About Tab
 
 private struct AboutTab: View {
+    @EnvironmentObject var settings: SettingsManager
+    @EnvironmentObject var appState: AppState
+
     private var appVersion: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
     }
@@ -767,6 +819,42 @@ private struct AboutTab: View {
                 }
             }
             .padding(.bottom, 4)
+
+            // Pro status. Restore has to be reachable without hitting the
+            // paywall first — App Review checks for it.
+            GroupBox {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 8) {
+                        Image(systemName: settings.isPro ? "checkmark.seal.fill" : "lock.fill")
+                            .foregroundStyle(settings.isPro ? Color.accentColor : .secondary)
+                        Text(settings.isPro ? "ChimeTime Pro — unlocked" : "ChimeTime Free")
+                            .font(.body.weight(.medium))
+                        Spacer()
+                        if !settings.isPro {
+                            Button("Unlock Pro") { appState.isPaywallPresented = true }
+                                .buttonStyle(.borderedProminent)
+                                .controlSize(.small)
+                        }
+                    }
+
+                    if !settings.isPro {
+                        Text("A one-time purchase unlocks appearance, sounds, custom schedules, Pomodoro, and more.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        Button("Restore Purchases") {
+                            if let store = appState.proStore {
+                                Task { await store.restore() }
+                            }
+                        }
+                        .buttonStyle(.borderless)
+                        .font(.caption)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(4)
+            }
 
             // Links
             GroupBox {

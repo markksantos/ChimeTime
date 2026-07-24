@@ -100,6 +100,7 @@ final class AppState: ObservableObject {
     @Published var nextFireTime: Date?
     @Published var lastTriggeredTime: Date?
     @Published var selectedSettingsTab: SettingsTab = .general
+    @Published var isPaywallPresented: Bool = false
 
     // References to managers (set during app init)
     var settingsManager: SettingsManager?

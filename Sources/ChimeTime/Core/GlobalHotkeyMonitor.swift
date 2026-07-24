@@ -1,46 +1,105 @@
 import AppKit
+import Carbon.HIToolbox
 
+/// System-wide hotkey via Carbon's `RegisterEventHotKey`.
+///
+/// Deliberately *not* `NSEvent.addGlobalMonitorForEvents`: that requires the
+/// Accessibility permission, which a sandboxed Mac App Store app cannot get
+/// (and asking for it is an App Review rejection). `RegisterEventHotKey` needs
+/// no permission and no prompt, and works fine inside the sandbox.
 final class GlobalHotkeyMonitor {
-    private var localMonitor: Any?
-    private var globalMonitor: Any?
+
     var onHotkey: (() -> Void)?
+
+    private var hotKeyRef: EventHotKeyRef?
+    private var handlerRef: EventHandlerRef?
+    private var registrationID: UInt32?
+
+    /// The Carbon callback must be a capture-free C function pointer, so live
+    /// monitors are looked up through this registry by hotkey ID.
+    private static var registry: [UInt32: GlobalHotkeyMonitor] = [:]
+    private static var nextID: UInt32 = 1
+    private static let signature: OSType = 0x43_48_4D_45  // 'CHME'
 
     func start(keyCode: Int, modifiers: Int) {
         stop()
 
-        let modifierFlags = NSEvent.ModifierFlags(rawValue: UInt(modifiers))
-            .intersection([.command, .option, .control, .shift])
+        let id = Self.nextID
+        Self.nextID += 1
+        Self.registry[id] = self
+        registrationID = id
 
-        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            if event.keyCode == UInt16(keyCode) &&
-               event.modifierFlags.intersection([.command, .option, .control, .shift]) == modifierFlags {
-                self?.onHotkey?()
-            }
-        }
+        var eventType = EventTypeSpec(
+            eventClass: OSType(kEventClassKeyboard),
+            eventKind: UInt32(kEventHotKeyPressed)
+        )
 
-        localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            if event.keyCode == UInt16(keyCode) &&
-               event.modifierFlags.intersection([.command, .option, .control, .shift]) == modifierFlags {
-                self?.onHotkey?()
-                return nil
-            }
-            return event
-        }
+        InstallEventHandler(
+            GetApplicationEventTarget(),
+            { _, event, _ -> OSStatus in
+                guard let event else { return OSStatus(eventNotHandledErr) }
+                var firedID = EventHotKeyID()
+                let status = GetEventParameter(
+                    event,
+                    EventParamName(kEventParamDirectObject),
+                    EventParamType(typeEventHotKeyID),
+                    nil,
+                    MemoryLayout<EventHotKeyID>.size,
+                    nil,
+                    &firedID
+                )
+                guard status == noErr,
+                      let monitor = GlobalHotkeyMonitor.registry[firedID.id] else {
+                    return OSStatus(eventNotHandledErr)
+                }
+                DispatchQueue.main.async { monitor.onHotkey?() }
+                return noErr
+            },
+            1,
+            &eventType,
+            nil,
+            &handlerRef
+        )
+
+        let hotKeyID = EventHotKeyID(signature: Self.signature, id: id)
+        RegisterEventHotKey(
+            UInt32(keyCode),
+            Self.carbonModifiers(from: modifiers),
+            hotKeyID,
+            GetApplicationEventTarget(),
+            0,
+            &hotKeyRef
+        )
     }
 
     func stop() {
-        if let monitor = globalMonitor {
-            NSEvent.removeMonitor(monitor)
-            globalMonitor = nil
+        if let hotKeyRef {
+            UnregisterEventHotKey(hotKeyRef)
+            self.hotKeyRef = nil
         }
-        if let monitor = localMonitor {
-            NSEvent.removeMonitor(monitor)
-            localMonitor = nil
+        if let handlerRef {
+            RemoveEventHandler(handlerRef)
+            self.handlerRef = nil
+        }
+        if let registrationID {
+            Self.registry.removeValue(forKey: registrationID)
+            self.registrationID = nil
         }
     }
 
     deinit {
         stop()
+    }
+
+    /// Translate `NSEvent.ModifierFlags` raw bits into Carbon modifier bits.
+    static func carbonModifiers(from modifiers: Int) -> UInt32 {
+        let flags = NSEvent.ModifierFlags(rawValue: UInt(modifiers))
+        var carbon: UInt32 = 0
+        if flags.contains(.command) { carbon |= UInt32(cmdKey) }
+        if flags.contains(.option) { carbon |= UInt32(optionKey) }
+        if flags.contains(.control) { carbon |= UInt32(controlKey) }
+        if flags.contains(.shift) { carbon |= UInt32(shiftKey) }
+        return carbon
     }
 
     /// Human-readable description of the current shortcut

@@ -130,7 +130,8 @@ final class SchedulerTests: XCTestCase {
     // MARK: - Test 11: scheduler_disabled_hours_skipped
 
     func test_scheduler_disabled_hours_skipped() throws {
-        let settingsManager = SettingsManager()
+        // The per-hour grid is a Pro feature.
+        let settingsManager = SettingsManager(entitlement: ProEntitlement(isPro: true))
         settingsManager.disabledHours = [0, 1, 2, 3, 4, 5, 12]  // Disable midnight-5AM and noon
 
         XCTAssertTrue(settingsManager.shouldSuppressHour(0), "Disabled hour 0 should be suppressed")
@@ -140,6 +141,28 @@ final class SchedulerTests: XCTestCase {
         XCTAssertFalse(settingsManager.shouldSuppressHour(6), "Non-disabled hour 6 should not be suppressed")
         XCTAssertFalse(settingsManager.shouldSuppressHour(9), "Non-disabled hour 9 should not be suppressed")
         XCTAssertFalse(settingsManager.shouldSuppressHour(18), "Non-disabled hour 18 should not be suppressed")
+    }
+
+    func test_scheduler_disabled_hours_ignored_without_pro() throws {
+        let settingsManager = SettingsManager()  // free tier
+        settingsManager.disabledHours = [0, 1, 2, 3, 4, 5, 12]
+
+        XCTAssertFalse(settingsManager.shouldSuppressHour(0), "Free tier ignores the per-hour grid")
+        XCTAssertFalse(settingsManager.shouldSuppressHour(12), "Free tier ignores the per-hour grid")
+    }
+
+    func test_quiet_hours_work_without_pro() throws {
+        // Quiet Hours is intentionally free: an hourly chimer with no free way
+        // to silence the small hours is user-hostile.
+        let settingsManager = SettingsManager()
+        settingsManager.quietHoursEnabled = true
+        settingsManager.quietHoursStart = 23
+        settingsManager.quietHoursEnd = 7
+
+        XCTAssertFalse(settingsManager.isPro, "Precondition: free tier")
+        XCTAssertTrue(settingsManager.shouldSuppressHour(2), "Quiet Hours must work for free users")
+        XCTAssertTrue(settingsManager.shouldSuppressHour(23), "Quiet Hours must work for free users")
+        XCTAssertFalse(settingsManager.shouldSuppressHour(12), "Midday is outside the quiet window")
     }
 
     // MARK: - Test 14: settings_persist_to_userdefaults
