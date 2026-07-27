@@ -39,12 +39,14 @@ targets:
     sources:
       - path: Sources/ChimeTime
         name: ChimeTime
+      - path: Resources/Assets.xcassets
     settings:
       base:
         PRODUCT_NAME: ChimeTime
         PRODUCT_BUNDLE_IDENTIFIER: com.nosleeplab.chimetime
         INFOPLIST_FILE: Info.plist
         CODE_SIGN_ENTITLEMENTS: ChimeTime.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         # Menu bar agent: no Dock icon (also set via LSUIElement in Info.plist).
         LSUIElement: YES
         # Needed because the app links StoreKit and EventKit.

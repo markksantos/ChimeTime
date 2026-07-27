@@ -31,19 +31,16 @@ distribution additionally needs:
 Easiest path: Xcode → Settings → Accounts → Manage Certificates → `+`. Then let
 automatic signing create the provisioning profile once the App ID exists.
 
-## 3. App icon (BLOCKER)
+## 3. App icon ✅ DONE
 
-There is no icon. `Resources/AppIcon.icns` does not exist and the project has no
-asset catalog. The App Store requires a 1024×1024 icon.
+`Resources/Assets.xcassets/AppIcon.appiconset` holds the full macOS icon set
+(16–1024px, a golden bell with sound-wave arcs on a navy→teal gradient, squircle
+mask baked in). It's wired into `project.yml`
+(`ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon`) and `Info.plist`
+(`CFBundleIconName`), and a Release build compiles it into `Assets.car`. Verified.
 
-Once you have `Assets.xcassets` with an `AppIcon` set, add to `project.yml`
-under the target's `settings.base`:
-
-```yaml
-ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-```
-
-and add `Assets.xcassets` to the target's `sources`, then `xcodegen generate`.
+To swap in a different icon later: replace the PNGs in the appiconset (keep the
+filenames/sizes), then `xcodegen generate`. No other change needed.
 
 ## 4. App Store Connect
 
