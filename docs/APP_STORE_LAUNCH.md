@@ -63,14 +63,22 @@ filenames/sizes), then `xcodegen generate`. No other change needed.
 
 ## 5. Required metadata
 
-- **Privacy policy URL** — mandatory. ChimeTime collects nothing; a short page
-  saying so is enough.
-- **Support URL** — mandatory.
-- **App privacy questionnaire** — answer "Data Not Collected". The app has no
-  analytics, no network calls except StoreKit, and stores everything in
-  UserDefaults and its own container.
+The listing copy is written and validated in **`docs/store-listing.md`** (name,
+subtitle, promo text, keywords, description, What's New, IAP record, privacy
+answers — all within Apple's character limits). Paste it into App Store Connect.
+
+- **Privacy policy URL** — page written at **`docs/legal/privacy.html`**. Fill the
+  `[BRACKET]` placeholders (date, email, name), host it anywhere static, paste the
+  URL. ChimeTime collects nothing, so the policy is short and true.
+- **Support URL** — page written at **`docs/legal/support.html`**. Same deal: fill
+  placeholders, host, paste. Includes an FAQ and a contact line.
+- **App privacy questionnaire** — answer "Data Not Collected" (details in
+  `store-listing.md`).
 - **Screenshots** — at least one 1280×800 or 1440×900. Show the notch drop, the
   settings window, and the paywall.
+
+> Both legal pages are self-contained HTML (no external assets, light/dark aware)
+> — drop them on GitHub Pages, Netlify, or any static host as-is.
 
 ## 6. Testing the purchase before shipping
 
