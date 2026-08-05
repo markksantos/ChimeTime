@@ -2,3 +2,6 @@
 ChimeTime.app/
 *.xcodeproj/
 DerivedData/
+
+# Xcode derived data (alt naming)
+DerivedDataCap/
