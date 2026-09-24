@@ -14,7 +14,7 @@ This replaces `docs/store-listing.md` where the two disagree. That file's IAP de
 | Primary category | Utilities (matches `LSApplicationCategoryType` in `Info.plist`) | — |
 | Secondary category | Productivity **⚠ MARK'S DECISION** (Lifestyle is the other option) | — |
 | Price | Free download with one in-app purchase. The $4.99 comes from `Products.storekit`. **⚠ MARK'S DECISION** | — |
-| Copyright | 2026 Mark Studios LLC **⚠ MARK'S DECISION**. `Info.plist` has `Copyright © 2026 Mark Santos. MIT Licensed.` | — |
+| Copyright | 2026 Mark Studios LLC (decided 2026-09-24; `Info.plist` now matches: `Copyright © 2026 Mark Studios LLC. MIT Licensed.`) | — |
 | Support URL | https://nosleeplab.com/support (200; general NoSleepLab page with a contact address) | — |
 | Privacy Policy URL | https://nosleeplab.com/privacy (200; general NoSleepLab policy) | — |
 | Marketing URL (optional) | https://nosleeplab.com/apps/chimetime (200, but **update it first**, see below) | — |
@@ -141,5 +141,5 @@ Every answer is "None" or "No", which gives a **4+** rating. There's no web view
   - `LICENSE` is MIT, `Info.plist` says "MIT Licensed", and the marketing page says the source is public.
   - The Mac App Store allows this, but anyone can build Pro for free from source.
   - Either keep it that way on purpose, or change the licence or visibility before launch.
-- **Seller, brand and copyright:** Mark Studios LLC, NoSleepLab or Mark Santos. Use one consistently across the copyright field, the pages and the About screen.
+- ~~**Seller, brand and copyright**~~ **Decided 2026-09-24: Mark Studios LLC** for the seller and copyright. NoSleepLab stays the product brand on the pages. The D-U-N-S / Organization enrolment is Mark's.
 - **Donate and Check for Updates rows:** remove them from the store build (a review rejection, see CHECKLIST). Decide whether a direct-download build keeps them.

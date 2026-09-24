@@ -44,7 +44,7 @@ Status on 2026-09-24, branch `appstore-kit`. Nothing has been signed for distrib
   - Re-test a purchase in the StoreKit sandbox after removing it.
 - **Add `PrivacyInfo.xcprivacy`.** The app uses `UserDefaults`, a required-reason API. Declare `NSPrivacyAccessedAPICategoryUserDefaults` with reason `CA92.1`, set `NSPrivacyTracking` to false, and list no collected types. There's no manifest today.
 - [x] ~~**Icon scale.**~~ **Fixed 2026-09-24:** the body was re-scaled to 824 px on the 1024 canvas with a soft shadow, and all 7 files regenerated. The Release build succeeds (universal).
-- **Copyright string.** `Info.plist` says `Copyright © 2026 Mark Santos. MIT Licensed.` Align it with the seller name you choose.
+- [x] ~~**Copyright string.**~~ **Done 2026-09-24:** `Info.plist` now reads `Copyright © 2026 Mark Studios LLC. MIT Licensed.` (the entity Mark decided).
 - **Marketing page.** `nosleeplab.com/apps/chimetime` says "Free · Source only · Public on GitHub" and presents the 24-hour grid as free. Update it before listing it as the Marketing URL.
 - **`CFBundleVersion` is hardcoded to `1` in `Info.plist`.** Bump it on every upload; App Store Connect rejects a duplicate build number.
 - **More screenshots.** One is enough to submit. Good extras need a click to reach: the paywall, the Settings window (General and Sound tabs), and the Pomodoro panel.
