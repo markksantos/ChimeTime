@@ -862,16 +862,6 @@ private struct AboutTab: View {
                     AboutLinkRow(label: "Website", icon: "globe", url: "https://nosleeplab.com")
                     Divider()
                     AboutLinkRow(label: "GitHub", icon: "chevron.left.forwardslash.chevron.right", url: "https://github.com/nosleeplab")
-                    Divider()
-                    AboutLinkRow(label: "Check for Updates", icon: "arrow.triangle.2.circlepath", url: "https://github.com/nosleeplab/ChimeTime/releases")
-                }
-                .padding(4)
-            }
-
-            // Support
-            GroupBox {
-                VStack(spacing: 12) {
-                    AboutLinkRow(label: "Donate", icon: "heart", url: "https://nosleeplab.com/donate")
                 }
                 .padding(4)
             }

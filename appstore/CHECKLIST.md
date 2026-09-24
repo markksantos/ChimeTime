@@ -28,8 +28,8 @@ Status on 2026-09-24, branch `appstore-kit`. Nothing has been signed for distrib
 1. **Apple Distribution certificate.** This Mac has only `Apple Development: Mark Santos`. The Mac App Store needs an **Apple Distribution** cert and a **Mac Installer Distribution** cert. Create them in Xcode → Settings → Accounts → Manage Certificates; it needs Mark's Apple ID.
 2. **Identity.** `DEVELOPMENT_TEAM` is empty in `project.yml`, and the bundle ID prefix is Mark's decision (see METADATA). Run `scripts/set-identity.sh <bundle-id> <TEAMID>`. It updates `Info.plist`, `StoreConfiguration.swift`, `Products.storekit` and `project.yml` together, then regenerates the project. The `.xcodeproj` is gitignored.
 3. **Remove two About links before review.** Both are in `Sources/ChimeTime/Views/Settings/SettingsView.swift`:
-   - Line 874, **"Donate"** → `https://nosleeplab.com/donate`. A payment call-to-action outside IAP in an app that sells IAP is rejected under 3.1.1, and donations are allowed only for approved nonprofits (3.2.1(vi)). The URL also returns **404**.
-   - Line 866, **"Check for Updates"** → GitHub releases. Mac App Store apps may only update through the App Store (2.4.5(vii)). This URL also returns **404**.
+   - [x] ~~Line 874, **"Donate"** → `https://nosleeplab.com/donate`. A payment call-to-action outside IAP in an app that sells IAP is rejected under 3.1.1, and donations are allowed only for approved nonprofits (3.2.1(vi)). The URL also returns **404**.~~ **Removed 2026-09-24** (the whole Support group).
+   - [x] ~~Line 866, **"Check for Updates"** → GitHub releases. Mac App Store apps may only update through the App Store (2.4.5(vii)). This URL also returns **404**.~~ **Removed 2026-09-24.**
 4. **App Store Connect records.** Create the app record (macOS, English (U.S.), bundle ID, SKU) and the non-consumable IAP. The IAP **must be submitted with the first build**. Its description has to be at most 45 characters; use METADATA.md, because `docs/store-listing.md` has an 80-character one.
 5. **IAP review screenshot.** A capture of the paywall. Opening it takes a click, so it isn't in this kit.
 6. **Archive and upload** with the release **Xcode 27.0** (27A266a), never a beta: `xcodegen generate`, then Product → Archive → Distribute App → App Store Connect.
@@ -43,7 +43,7 @@ Status on 2026-09-24, branch `appstore-kit`. Nothing has been signed for distrib
   - Dropping it makes the least-privilege story clean. Watchdog's entitlements already leave it out for the same reason, and Watchdog also uses StoreKit 2.
   - Re-test a purchase in the StoreKit sandbox after removing it.
 - **Add `PrivacyInfo.xcprivacy`.** The app uses `UserDefaults`, a required-reason API. Declare `NSPrivacyAccessedAPICategoryUserDefaults` with reason `CA92.1`, set `NSPrivacyTracking` to false, and list no collected types. There's no manifest today.
-- **Icon scale.** The squircle body fills **95%** of the 1024 canvas (973 px). Apple's macOS grid is an 824 px body with room for the shadow, so ChimeTime will look about 15% bigger than its neighbours in the Dock. Re-scale it the way QuickIcons was on 2026-09-24. It's cosmetic, not a rejection.
+- [x] ~~**Icon scale.**~~ **Fixed 2026-09-24:** the body was re-scaled to 824 px on the 1024 canvas with a soft shadow, and all 7 files regenerated. The Release build succeeds (universal).
 - **Copyright string.** `Info.plist` says `Copyright © 2026 Mark Santos. MIT Licensed.` Align it with the seller name you choose.
 - **Marketing page.** `nosleeplab.com/apps/chimetime` says "Free · Source only · Public on GitHub" and presents the 24-hour grid as free. Update it before listing it as the Marketing URL.
 - **`CFBundleVersion` is hardcoded to `1` in `Info.plist`.** Bump it on every upload; App Store Connect rejects a duplicate build number.
